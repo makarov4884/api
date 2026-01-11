@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bcraping.kr API 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .result-container {
+            margin-top: 20px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-header h3 {
+            color: #333;
+        }
+
+        .status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .status.error {
+            background: #f44336;
+            color: white;
+        }
+
+        .status.loading {
+            background: #ff9800;
+            color: white;
+        }
+
+        .result-box {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .info-box strong {
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Bcraping.kr API 테스트</h1>
+            <p>Python 설치 없이 브라우저에서 바로 테스트하세요!</p>
+        </div>
+
+        <div class="card">
+            <div class="info-box">
+                <strong>ℹ️ 안내:</strong> 이 페이지는 bcraping.kr의 내부 API를 직접 호출합니다. Python 서버 없이도 작동합니다!
+            </div>
+
+            <div class="input-group">
+                <label>BJ ID</label>
+                <input type="text" id="bjId" value="pyh3646" placeholder="예: pyh3646">
+            </div>
+
+            <div class="input-group">
+                <label>방송국 ID (Station ID)</label>
+                <input type="text" id="stationId" value="290639636" placeholder="예: 290639636">
+            </div>
+
+            <div class="input-group">
+                <label>페이지</label>
+                <input type="number" id="page" value="1" min="1">
+            </div>
+
+            <div class="input-group">
+                <label>페이지당 항목 수</label>
+                <input type="number" id="perPage" value="20" min="1" max="100">
+            </div>
+
+            <div>
+                <button class="btn" onclick="fetchMonitorData()">📊 모니터링 데이터 조회</button>
+                <button class="btn btn-secondary" onclick="clearResults()">🗑️ 결과 지우기</button>
+            </div>
+        </div>
+
+        <div class="card" id="resultCard" style="display: none;">
+            <div class="result-container">
+                <div class="result-header">
+                    <h3>📋 결과</h3>
+                    <span class="status" id="status">대기 중</span>
+                </div>
+                <div class="result-box" id="resultBox">결과가 여기에 표시됩니다...</div>
+            </div>
+
+            <div class="table-container" id="tableContainer" style="display: none;">
+                <h3 style="margin: 20px 0 10px 0;">📊 데이터 테이블</h3>
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>메시지 ID</th>
+                            <th>시간</th>
+                            <th>닉네임</th>
+                            <th>별풍선</th>
+                            <th>메시지</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchMonitorData() {
+            const bjId = document.getElementById('bjId').value;
+            const stationId = document.getElementById('stationId').value;
+            const page = document.getElementById('page').value;
+            const perPage = document.getElementById('perPage').value;
+
+            if (!bjId || !stationId) {
+                alert('BJ ID와 방송국 ID를 입력해주세요!');
+                return;
+            }
+
+            const resultCard = document.getElementById('resultCard');
+            const resultBox = document.getElementById('resultBox');
+            const status = document.getElementById('status');
+            const tableContainer = document.getElementById('tableContainer');
+            const tableBody = document.getElementById('tableBody');
+
+            // 결과 카드 표시
+            resultCard.style.display = 'block';
+            status.className = 'status loading';
+            status.innerHTML = '<span class="loading-spinner"></span> 로딩 중...';
+            resultBox.textContent = '데이터를 가져오는 중...';
+            tableContainer.style.display = 'none';
+
+            const url = `https://bcraping.kr/api/monitor/${bjId}/${stationId}?page=${page}&perPage=${perPage}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP 에러! 상태: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // 성공 상태 표시
+                status.className = 'status success';
+                status.textContent = '✓ 성공';
+
+                // JSON 결과 표시
+                resultBox.textContent = JSON.stringify(data, null, 2);
+
+                // 테이블 생성
+                if (data.data && data.data.contents && Array.isArray(data.data.contents)) {
+                    tableBody.innerHTML = '';
+                    data.data.contents.forEach((item, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${item.MESSAGE_ID || '-'}</td>
+                            <td>${item.CREATE_DATE || '-'}</td>
+                            <td>${item.BALLON_USER_NAME || '-'}</td>
+                            <td>${item.BALLON_COUNT || '-'}</td>
+                            <td>${item.MESSAGE || '-'}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    tableContainer.style.display = 'block';
+                }
+
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = '✗ 에러';
+                resultBox.textContent = `에러 발생:\n${error.message}\n\n원본 API에 접근할 수 없거나 CORS 정책으로 인해 차단되었을 수 있습니다.\n\n해결 방법:\n1. Python FastAPI 서버를 사용하세요 (CORS 문제 해결)\n2. 브라우저 확장 프로그램으로 CORS를 비활성화하세요\n3. 원본 사이트에서 직접 확인하세요`;
+                tableContainer.style.display = 'none';
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('resultCard').style.display = 'none';
+            document.getElementById('resultBox').textContent = '';
+            document.getElementById('tableBody').innerHTML = '';
+        }
+
+        // Enter 키로 검색
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                fetchMonitorData();
+            }
+        });
+    </script>
+</body>
+</html>

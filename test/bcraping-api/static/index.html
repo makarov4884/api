@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비크레핑 - 모니터링</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: #2a2a2a;
+            padding: 15px 30px;
+            border-bottom: 1px solid #3a3a3a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #4a9eff;
+        }
+
+        .broadcast-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .broadcast-title {
+            font-size: 0.95em;
+            color: #e0e0e0;
+        }
+
+        .live-badge {
+            background: #ff4444;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-info {
+            display: flex;
+            gap: 20px;
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-value {
+            color: #4a9eff;
+            font-weight: 600;
+        }
+
+        /* Controls */
+        .controls {
+            background: #252525;
+            padding: 15px 30px;
+            border-bottom: 1px solid #3a3a3a;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group label {
+            font-size: 0.85em;
+            color: #999;
+            white-space: nowrap;
+        }
+
+        .input-group input {
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            color: #e0e0e0;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            width: 120px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #4a9eff;
+        }
+
+        .btn {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 7px 16px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #3a8eef;
+        }
+
+        .btn-refresh {
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+        }
+
+        .btn-refresh:hover {
+            background: #3a3a3a;
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .auto-refresh input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .auto-refresh label {
+            font-size: 0.85em;
+            color: #999;
+            cursor: pointer;
+        }
+
+        /* Table Container */
+        .table-container {
+            flex: 1;
+            overflow: auto;
+            background: #1a1a1a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #2a2a2a;
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #999;
+            border-bottom: 1px solid #3a3a3a;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th.sortable:hover {
+            color: #4a9eff;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        tbody tr {
+            transition: background 0.15s;
+        }
+
+        tbody tr:hover {
+            background: #252525;
+        }
+
+        tbody tr.new-row {
+            animation: highlightNew 2s ease;
+        }
+
+        @keyframes highlightNew {
+            0% {
+                background: #4a9eff33;
+            }
+
+            100% {
+                background: transparent;
+            }
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .no-data h3 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        /* Column specific styles */
+        .col-no {
+            width: 60px;
+            text-align: center;
+            color: #666;
+        }
+
+        .col-message-id {
+            width: 150px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .col-time {
+            width: 100px;
+            color: #999;
+        }
+
+        .col-datetime {
+            width: 160px;
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        .col-nickname {
+            width: 150px;
+            font-weight: 600;
+            color: #4a9eff;
+        }
+
+        .col-balloon {
+            width: 100px;
+            text-align: right;
+            font-weight: 700;
+            color: #ffaa00;
+        }
+
+        .col-message {
+            min-width: 300px;
+            color: #e0e0e0;
+        }
+
+        /* Status indicator */
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.connected {
+            background: #44ff44;
+            box-shadow: 0 0 8px #44ff44;
+        }
+
+        .status-indicator.disconnected {
+            background: #ff4444;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #3a3a3a;
+            border-top-color: #4a9eff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3a3a3a;
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4a4a4a;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <div class="logo">🎯 비크레핑</div>
+                <div class="broadcast-info">
+                    <div class="broadcast-title" id="broadcastTitle">방송 모니터링</div>
+                    <span class="live-badge">LIVE</span>
+                </div>
+            </div>
+            <div class="stats-info">
+                <div class="stat-item">
+                    <span>총 데이터:</span>
+                    <span class="stat-value" id="totalCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>총 별풍선:</span>
+                    <span class="stat-value" id="totalBalloons">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="status-indicator" id="statusIndicator"></span>
+                    <span id="statusText">대기 중</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="input-group">
+                <label>BJ ID:</label>
+                <input type="text" id="bjId" value="" placeholder="BJ ID 입력">
+            </div>
+            <div class="input-group">
+                <label>방송국 ID:</label>
+                <input type="text" id="stationId" value="" placeholder="자동 검색 클릭">
+                <button class="btn" onclick="autoFindStation()" style="padding: 7px 12px; margin-left: 5px;">🔍
+                    자동</button>
+            </div>
+            <div class="input-group">
+                <label>항목 수:</label>
+                <input type="number" id="perPage" value="100" min="10" max="100">
+            </div>
+            <div class="input-group" style="flex: 1; max-width: 300px;">
+                <label>🔍 검색:</label>
+                <input type="text" id="searchInput" placeholder="닉네임, 메시지 검색..." style="width: 100%;"
+                    oninput="filterData()">
+            </div>
+            <button class="btn" onclick="loadData()">조회</button>
+            <button class="btn btn-refresh" onclick="refreshData()">🔄 초기화</button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-no">No.</th>
+                        <th class="col-message-id">메시지ID</th>
+                        <th class="col-time sortable" onclick="sortBy('time')">시간 ▼</th>
+                        <th class="col-datetime">생성일시</th>
+                        <th class="col-nickname sortable" onclick="sortBy('nickname')">닉네임</th>
+                        <th class="col-balloon sortable" onclick="sortBy('balloon')">별풍</th>
+                        <th class="col-message">메시지</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="7" class="loading">
+                            <div class="spinner"></div>
+                            <p style="margin-top: 15px;">데이터를 불러오는 중...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <script>
+            let currentData = [];
+            let allData = []; // 누적된 전체 데이터
+            let filteredData = []; // 필터링된 데이터
+            let websocket = null;
+            let reconnectInterval = null;
+            let searchQuery = '';
+            let broadcastStartTime = null;
+
+            // 페이지 로드 시 자동 실행
+            window.addEventListener('load', function () {
+                connectWebSocket();
+            });
+
+            // 페이지 종료 시 WebSocket 닫기
+            window.addEventListener('beforeunload', function () {
+                if (websocket) {
+                    websocket.close();
+                }
+            });
+
+            // Enter 키 지원 (loadData가 connectWebSocket을 호출하도록 변경)
+            document.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    loadData();
+                }
+            });
+
+            function connectWebSocket() {
+                const bjId = document.getElementById('bjId').value;
+                const stationId = document.getElementById('stationId').value;
+
+                if (!bjId || !stationId) {
+                    alert('BJ ID와 방송국 ID를 입력해주세요!');
+                    return;
+                }
+
+                // 기존 연결 종료
+                if (websocket) {
+                    websocket.close();
+                }
+
+                updateStatus('loading', '연결 중...');
+
+                // WebSocket 연결 (동적 URL 생성)
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const host = window.location.host;
+                const wsUrl = `${protocol}//${host}/ws/monitor/${bjId}/${stationId}`;
+                console.log('WebSocket 연결 시도:', wsUrl);
+                websocket = new WebSocket(wsUrl);
+
+                websocket.onopen = function (e) {
+                    console.log('WebSocket 연결 성공');
+                    updateStatus('connected', '실시간 연결됨');
+
+                    // 재연결 타이머 초기화
+                    if (reconnectInterval) {
+                        clearInterval(reconnectInterval);
+                        reconnectInterval = null;
+                    }
+                };
+
+                websocket.onmessage = function (event) {
+                    try {
+                        const message = JSON.parse(event.data);
+
+                        if (message.type === 'initial') {
+                            // 초기 데이터 로드
+                            allData = message.data;
+
+                            // 서버에서 받은 방송 시작 시간 사용
+                            if (message.broadcast_start) {
+                                broadcastStartTime = new Date(message.broadcast_start);
+                                console.log('방송 시작 시간:', message.broadcast_start);
+                            } else if (allData.length > 0) {
+                                // 서버에서 제공하지 않으면 가장 오래된 데이터 사용
+                                const oldestData = allData[allData.length - 1];
+                                if (oldestData.CREATE_DATE) {
+                                    broadcastStartTime = new Date(oldestData.CREATE_DATE);
+                                }
+                            }
+
+                            applyFilter();
+                            console.log('초기 데이터 로드:', allData.length + '개');
+
+                        } else if (message.type === 'update') {
+                            // 새 데이터 추가
+                            const newItems = message.data;
+                            allData = [...newItems, ...allData];
+
+                            // 방송 시작 시간이 없으면 설정
+                            if (!broadcastStartTime && allData.length > 0) {
+                                const oldestData = allData[allData.length - 1];
+                                if (oldestData.CREATE_DATE) {
+                                    broadcastStartTime = new Date(oldestData.CREATE_DATE);
+                                }
+                            }
+
+                            applyFilter();
+
+                            // 새 데이터 하이라이트
+                            const newFilteredCount = newItems.filter(item => {
+                                if (!searchQuery) return true;
+                                const nickname = (item.BALLON_USER_NAME || '').toLowerCase();
+                                const message = (item.MESSAGE || '').toLowerCase();
+                                return nickname.includes(searchQuery) || message.includes(searchQuery);
+                            }).length;
+
+                            if (newFilteredCount > 0) {
+                                renderTable(true, newFilteredCount);
+                            }
+
+                            console.log('새 데이터 추가:', newItems.length + '개');
+
+                        } else if (message.type === 'error') {
+                            console.error('서버 에러:', message.message);
+                        }
+
+                    } catch (error) {
+                        console.error('메시지 파싱 에러:', error);
+                    }
+                };
+
+                websocket.onerror = function (error) {
+                    console.error('WebSocket 에러:', error);
+                    updateStatus('disconnected', '연결 에러');
+                };
+
+                websocket.onclose = function (event) {
+                    console.log('WebSocket 연결 종료');
+                    updateStatus('disconnected', '연결 끊김');
+
+                    // 3초 후 자동 재연결 (더 빠른 재연결)
+                    if (!reconnectInterval) {
+                        reconnectInterval = setTimeout(() => {
+                            console.log('재연결 시도...');
+                            updateStatus('loading', '재연결 중...');
+                            connectWebSocket();
+                        }, 3000);
+                    }
+                };
+            }
+
+            function loadData() {
+                // WebSocket 재연결
+                connectWebSocket();
+            }
+
+            function refreshData() {
+                // 데이터 초기화 후 재연결
+                allData = [];
+                currentData = [];
+                connectWebSocket();
+            }
+
+            async function autoFindStation() {
+                const bjId = document.getElementById('bjId').value;
+
+                if (!bjId) {
+                    alert('BJ ID를 입력해주세요!');
+                    return;
+                }
+
+                const stationInput = document.getElementById('stationId');
+                const originalValue = stationInput.value;
+                stationInput.value = '검색 중...';
+                stationInput.disabled = true;
+
+                try {
+                    const apiUrl = `${window.location.protocol}//${window.location.host}/api/find-station/${bjId}`;
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+
+                    if (data.success && data.is_live) {
+                        stationInput.value = data.station_id;
+                        stationInput.disabled = false;
+
+                        // 방송 제목 업데이트
+                        if (data.title) {
+                            document.getElementById('broadcastTitle').textContent = data.title;
+                        }
+
+                        alert(`✅ 방송 중인 station_id를 찾았습니다!\n방송 제목: ${data.title || '알 수 없음'}`);
+
+                        // 자동으로 연결
+                        connectWebSocket();
+                    } else {
+                        stationInput.value = originalValue;
+                        stationInput.disabled = false;
+                        alert('❌ 현재 방송 중이 아닙니다.\n방송 중일 때 다시 시도해주세요.');
+                    }
+                } catch (error) {
+                    console.error('Station ID 검색 실패:', error);
+                    stationInput.value = originalValue;
+                    stationInput.disabled = false;
+                    alert('❌ Station ID 검색에 실패했습니다.\n서버가 실행 중인지 확인해주세요.');
+                }
+            }
+
+            function renderTable(highlightNew = false, newCount = 0) {
+                const tbody = document.getElementById('tableBody');
+
+                if (currentData.length === 0) {
+                    tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="no-data">
+                            <h3>📭 데이터가 없습니다</h3>
+                            <p>다른 BJ ID나 방송국 ID를 시도해보세요</p>
+                        </td>
+                    </tr>
+                `;
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                currentData.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    // 새로 추가된 데이터만 하이라이트
+                    if (highlightNew && index < newCount) {
+                        row.className = 'new-row';
+                    }
+
+                    row.innerHTML = `
+                    <td class="col-no">${index + 1}</td>
+                    <td class="col-message-id">${item.MESSAGE_ID || '-'}</td>
+                    <td class="col-time">${formatElapsedTime(item.CREATE_DATE)}</td>
+                    <td class="col-datetime">${formatAbsoluteTime(item.CREATE_DATE)}</td>
+                    <td class="col-nickname">${item.BALLON_USER_NAME || '-'}</td>
+                    <td class="col-balloon">${(item.BALLON_COUNT || 0).toLocaleString()}</td>
+                    <td class="col-message">${item.MESSAGE || '-'}</td>
+                `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            function updateStats() {
+                const totalCount = currentData.length;
+                const totalBalloons = currentData.reduce((sum, item) => sum + (item.BALLON_COUNT || 0), 0);
+
+                document.getElementById('totalCount').textContent = totalCount.toLocaleString();
+                document.getElementById('totalBalloons').textContent = totalBalloons.toLocaleString();
+            }
+
+            function updateStatus(status, text) {
+                const indicator = document.getElementById('statusIndicator');
+                const statusText = document.getElementById('statusText');
+
+                indicator.className = 'status-indicator';
+
+                if (status === 'connected') {
+                    indicator.classList.add('connected');
+                } else if (status === 'disconnected') {
+                    indicator.classList.add('disconnected');
+                }
+
+                statusText.textContent = text;
+            }
+
+
+            function filterData() {
+                searchQuery = document.getElementById('searchInput').value.toLowerCase();
+                applyFilter();
+            }
+
+            function applyFilter() {
+                if (!searchQuery) {
+                    filteredData = allData;
+                } else {
+                    filteredData = allData.filter(item => {
+                        const nickname = (item.BALLON_USER_NAME || '').toLowerCase();
+                        const message = (item.MESSAGE || '').toLowerCase();
+                        return nickname.includes(searchQuery) || message.includes(searchQuery);
+                    });
+                }
+                currentData = filteredData;
+                renderTable(false, 0);
+                updateStats();
+            }
+
+            // 경과 시간 포맷 (MM:SS 또는 HH:MM:SS)
+            function formatElapsedTime(dateString) {
+                if (!dateString || !broadcastStartTime) return '-';
+
+                const currentTime = new Date(dateString);
+                const elapsed = Math.floor((currentTime - broadcastStartTime) / 1000);
+
+                if (elapsed < 0) {
+                    console.warn('경과 시간이 음수입니다:', elapsed);
+                    return '0:00';
+                }
+
+                const hours = Math.floor(elapsed / 3600);
+                const minutes = Math.floor((elapsed % 3600) / 60);
+                const seconds = elapsed % 60;
+
+                // 1시간 미만이면 M:SS, 이상이면 H:MM:SS
+                if (hours > 0) {
+                    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                } else {
+                    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+                }
+            }
+
+            // 절대 시간 포맷 (실제 시간 표시)
+            function formatAbsoluteTime(dateString) {
+                if (!dateString) return '-';
+
+                // CREATE_DATE에서 시간 부분만 추출 (HH:MM:SS)
+                const timePart = dateString.split(' ')[1] || dateString;
+                return timePart;
+            }
+
+
+
+            function sortBy(column) {
+                if (column === 'time') {
+                    currentData.sort((a, b) => {
+                        return new Date(b.CREATE_DATE) - new Date(a.CREATE_DATE);
+                    });
+                } else if (column === 'nickname') {
+                    currentData.sort((a, b) => {
+                        return (a.BALLON_USER_NAME || '').localeCompare(b.BALLON_USER_NAME || '');
+                    });
+                } else if (column === 'balloon') {
+                    currentData.sort((a, b) => {
+                        return (b.BALLON_COUNT || 0) - (a.BALLON_COUNT || 0);
+                    });
+                }
+                renderTable();
+            }
+        </script>
+</body>
+
+</html>
