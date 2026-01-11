@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>실시간 모니터링</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>>
     <style>
         * {
             margin: 0;
@@ -401,6 +402,7 @@
             </div>
             <button class="btn" onclick="loadData()">조회</button>
             <button class="btn btn-refresh" onclick="refreshData()">🔄 초기화</button>
+            <button class="btn" onclick="exportToExcel()" style="background: #28a745;">📊 엑셀 저장</button>
         </div>
 
         <div class="table-container">
@@ -755,6 +757,54 @@
                     });
                 }
                 renderTable();
+            }
+
+            // 엑셀 저장 함수
+            function exportToExcel() {
+                if (currentData.length === 0) {
+                    alert('저장할 데이터가 없습니다!');
+                    return;
+                }
+
+                // 엑셀용 데이터 준비
+                const excelData = currentData.map((item, index) => ({
+                    'No': index + 1,
+                    '메시지ID': item.MESSAGE_ID || '',
+                    '시간': formatElapsedTime(item.CREATE_DATE),
+                    '생성일시': formatAbsoluteTime(item.CREATE_DATE),
+                    '닉네임': item.BALLON_USER_NAME || '',
+                    '별풍선': item.BALLON_COUNT || 0,
+                    '메시지': item.MESSAGE || ''
+                }));
+
+                // 워크시트 생성
+                const ws = XLSX.utils.json_to_sheet(excelData);
+
+                // 컬럼 너비 설정
+                ws['!cols'] = [
+                    { wch: 5 },   // No
+                    { wch: 15 },  // 메시지ID
+                    { wch: 10 },  // 시간
+                    { wch: 20 },  // 생성일시
+                    { wch: 15 },  // 닉네임
+                    { wch: 10 },  // 별풍선
+                    { wch: 50 }   // 메시지
+                ];
+
+                // 워크북 생성
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, '모니터링 데이터');
+
+                // 파일명 생성 (BJ ID와 날짜 포함)
+                const bjId = document.getElementById('bjId').value || 'unknown';
+                const now = new Date();
+                const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+                const filename = `${bjId}_${dateStr}.xlsx`;
+
+                // 파일 저장
+                XLSX.writeFile(wb, filename);
+
+                console.log(`엑셀 파일 저장: ${filename} (${currentData.length}개 항목)`);
             }
         </script>
 </body>
